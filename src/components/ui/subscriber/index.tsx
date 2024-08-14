@@ -23,13 +23,13 @@ function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: Sub
           <Stack direction="row" gap={1}>
             {isConnected ? (
               <>
-                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} />
-                <Button variant="contained">Subscribe</Button>
+                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} disabled={!isConnected} />
+                <Button variant="contained" disabled={!isConnected}>Subscribe</Button>
               </>
             ) : (
               <>
-                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} defaultValue={hubUrl} disabled />
-                <Button variant="contained" color="success" onClick={connect}>Connect</Button>
+                <TextField id="hubUrl" label="Hub URL" sx={{ minWidth: "80%" }} defaultValue={hubUrl} disabled />
+                <Button variant="contained" color="success" onClick={connect} disabled={!isReady}>Connect</Button>
               </>
             )}
           </Stack>

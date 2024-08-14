@@ -31,7 +31,7 @@ function useNotifications({ hubUrl, debugConnection = false, onNotify }: UseNoti
     
     // Configure the hub URL and connect to it using WebSockets.
     hubBuilder.withUrl(hubUrl, {
-      skipNegotiation: true,
+      skipNegotiation: true, // Without this setting, the client can't connect to the hub. I don't know yet why.
       transport: HttpTransportType.WebSockets
     });
 
