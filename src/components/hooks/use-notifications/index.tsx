@@ -1,22 +1,34 @@
-import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel, Subject } from "@microsoft/signalr";
 import { useEffect, useState } from "react";
 
 export type UseNotificationsProps = {
   hubUrl: string;
-  onNotify: (message: string) => void;
   debugConnection?: boolean;
 };
 
-export type UseNotificationsReturnValue = [boolean, boolean, () => void];
+export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => string];
+
+export type Notification = {
+  timestamp: Date;
+  title: string;
+  body: string;
+};
+
+export type Stream = {
+  topic: string; // notifications in the stream will be about this topic
+  reference: string; // i don't understand how references will work at the moment
+  subject: Subject<Notification>; // an RxJS subject used for multicasting notifications
+};
 
 /*
 * The useNotifications hook manages a SignalR connection to a SignalR hub.
 * It is also responsible for subscribing and unsubscribing to hub topics.
 */
-function useNotifications({ hubUrl, debugConnection = false, onNotify }: UseNotificationsProps) : UseNotificationsReturnValue {
+function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsProps) : UseNotificationsReturnValue {
   const [hub, setHub] = useState<HubConnection>();
   const [isReady, setReady] = useState<boolean>(false);
   const [isConnected, setConnected] = useState<boolean>(false);
+  const [streams, setStreams] = useState<Map<string, Stream>>(new Map<string, Stream>());
 
   useEffect(() => {
     buildHub();
@@ -62,7 +74,7 @@ function useNotifications({ hubUrl, debugConnection = false, onNotify }: UseNoti
       return;
     }
 
-    hub.on("ReceiveMessage", onNotify);
+    hub.on("ReceiveNotification", handleNotification);
 
     setReady(true);
   }
@@ -77,7 +89,52 @@ function useNotifications({ hubUrl, debugConnection = false, onNotify }: UseNoti
     setConnected(true);
   }
 
-  return [isReady, isConnected, connect];
+  function subscribe(topic: string, onNotified: (notification: Notification) => void) {
+    // find an existing stream
+    let existingStream = streams.get(topic);
+
+    // create a stream for a topic if it doesn't exist yet
+    if(!existingStream) {
+      const newStream: Stream = {
+        topic,
+        reference: "",
+        subject: new Subject<Notification>()
+      };
+      streams.set(topic, newStream);
+      existingStream = newStream;
+    }
+
+    // append a stream listener
+    existingStream.subject.subscribe({
+      next: onNotified,
+      error: () => {},
+      complete: () => {}
+    });
+
+    return ""; // return the stream reference... i'm not yet sure how this will work though...
+  }
+
+  function handleNotification(topic: string, timestamp: Date, title: string, body: string) {
+    // find an existing stream
+    const existingStream = streams.get(topic);
+
+    // ensure the stream exists
+    if(!existingStream) {
+      return;
+    }
+
+    // create the notification object
+    const notification: Notification = {
+      timestamp,
+      title,
+      body
+    };
+
+    // broadcast the notification to stream subscribers
+    existingStream.subject.next(notification);
+  }
+
+  return [isReady, isConnected, connect, subscribe];
 }
 
 export default useNotifications;

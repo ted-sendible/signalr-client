@@ -10,7 +10,7 @@ export type SubscriberProps = {
 function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: SubscriberProps) {
   const [isReady, isConnected, connect] = useNotifications({
     hubUrl,
-    onNotify: (message: string) => { console.log(message); }
+    // onNotify: (message: string) => { console.log(message); }
   })
 
   return (
