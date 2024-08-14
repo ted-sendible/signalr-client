@@ -1,10 +1,18 @@
 import { Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
+import useNotifications from "../../hooks/use-notifications";
+import { useEffect } from "react";
 
 export type SubscriberProps = {
   name: string;
+  hubUrl?: string;
 };
 
-function Subscriber({ name }: SubscriberProps) {
+function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: SubscriberProps) {
+  const [isReady, isConnected, connect] = useNotifications({
+    hubUrl,
+    onNotify: (message: string) => { console.log(message); }
+  })
+
   return (
     <Card variant="outlined" sx={{ flex: 1 }}>
       <CardContent>
@@ -13,8 +21,17 @@ function Subscriber({ name }: SubscriberProps) {
             {name}
           </Typography>
           <Stack direction="row" gap={1}>
-            <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} />
-            <Button variant="contained">Subscribe</Button>
+            {isConnected ? (
+              <>
+                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} />
+                <Button variant="contained">Subscribe</Button>
+              </>
+            ) : (
+              <>
+                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} defaultValue={hubUrl} disabled />
+                <Button variant="contained" color="success" onClick={connect}>Connect</Button>
+              </>
+            )}
           </Stack>
         </Stack>
       </CardContent>
