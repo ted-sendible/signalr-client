@@ -1,6 +1,6 @@
 import { Container, Stack } from "@mui/material";
-import Navbar from "./components/navbar";
-import Subscriber from "./components/subscriber";
+import Navbar from "./components/ui/navbar";
+import Subscriber from "./components/ui/subscriber";
 
 function App() {
   return (
