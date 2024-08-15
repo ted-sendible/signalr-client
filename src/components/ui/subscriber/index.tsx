@@ -1,6 +1,7 @@
-import { Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
-import useNotifications from "../../hooks/use-notifications";
-import { useEffect } from "react";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
+import useNotifications, { Notification } from "../../hooks/use-notifications";
+import { useEffect, useState } from "react";
+import { ExpandMore } from "@mui/icons-material";
 
 export type SubscriberProps = {
   name: string;
@@ -8,10 +9,29 @@ export type SubscriberProps = {
 };
 
 function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: SubscriberProps) {
-  const [isReady, isConnected, connect] = useNotifications({
+  const [isReady, isConnected, connect, subscribe] = useNotifications({
     hubUrl,
     // onNotify: (message: string) => { console.log(message); }
-  })
+  });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [lastNotification, setLastNotification] = useState<Notification>();
+
+  useEffect(() => {
+    if(isConnected){
+      subscribe("system", setLastNotification);
+    }
+  }, [isConnected]);
+
+  useEffect(() => {
+    if(lastNotification){
+      pushNotification(lastNotification);
+    }
+  }, [lastNotification]);
+
+  function pushNotification(notification: Notification) {
+    console.log(notifications);
+    setNotifications([notification, ...notifications]);
+  }
 
   return (
     <Card variant="outlined" sx={{ flex: 1 }}>
@@ -33,6 +53,26 @@ function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: Sub
               </>
             )}
           </Stack>
+          <Card variant="outlined" sx={{ flex: 1 }}>
+            <CardContent>
+              {notifications.length > 0 ? notifications.map((notification, i) => (
+                <Accordion key={`notification-${i}`}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMore />}
+                    aria-controls={`notification-${i}-body`}
+                    id={`notification-${i}-title`}
+                  >
+                    {notification.title}
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {notification.body}
+                  </AccordionDetails>
+                </Accordion>
+              )) : (
+                <Typography align="center">No notifications.</Typography>
+              )}
+            </CardContent>
+          </Card>
         </Stack>
       </CardContent>
     </Card>
