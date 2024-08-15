@@ -1,4 +1,5 @@
 import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
 import { Subject, Subscription } from "rxjs";
 
@@ -98,7 +99,7 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
     if(!existingStream) {
       const newStream: Stream = {
         topic,
-        reference: "",
+        reference: nanoid(),
         subject: new Subject<Notification>()
       };
       streams.set(topic, newStream);
