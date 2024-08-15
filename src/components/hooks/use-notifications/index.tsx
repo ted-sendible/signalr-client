@@ -1,12 +1,13 @@
-import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel, Subject } from "@microsoft/signalr";
+import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useEffect, useState } from "react";
+import { Subject, Subscription } from "rxjs";
 
 export type UseNotificationsProps = {
   hubUrl: string;
   debugConnection?: boolean;
 };
 
-export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => string];
+export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscription];
 
 export type Notification = {
   timestamp: Date;
@@ -105,13 +106,13 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
     }
 
     // append a stream listener
-    existingStream.subject.subscribe({
+    var subscription = existingStream.subject.subscribe({
       next: onNotified,
       error: () => {},
       complete: () => {}
     });
 
-    return ""; // return the stream reference... i'm not yet sure how this will work though...
+    return subscription;
   }
 
   function handleNotification(topic: string, timestamp: Date, title: string, body: string) {
