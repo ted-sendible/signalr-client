@@ -1,5 +1,4 @@
 import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
-import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
 import { Subject, Subscription } from "rxjs";
 
@@ -8,7 +7,7 @@ export type UseNotificationsProps = {
   debugConnection?: boolean;
 };
 
-export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscription];
+export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscription | undefined];
 
 export type Notification = {
   timestamp: Date;
@@ -18,7 +17,6 @@ export type Notification = {
 
 export type Stream = {
   topic: string; // notifications in the stream will be about this topic
-  reference: string; // i don't understand how references will work at the moment
   subject: Subject<Notification>; // an RxJS subject used for multicasting notifications
 };
 
@@ -92,6 +90,10 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
   }
 
   function subscribe(topic: string, onNotified: (notification: Notification) => void) {
+    if(!hub){
+      return;
+    }
+
     // find an existing stream
     let existingStream = streams.get(topic);
 
@@ -99,10 +101,12 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
     if(!existingStream) {
       const newStream: Stream = {
         topic,
-        reference: nanoid(),
         subject: new Subject<Notification>()
       };
       streams.set(topic, newStream);
+
+      hub.invoke("Subscribe", topic);
+      
       existingStream = newStream;
     }
 
