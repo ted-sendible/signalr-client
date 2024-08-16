@@ -18,7 +18,7 @@ export type Notification = {
 export type Stream = {
   topic: string; // notifications in the stream will be about this topic
   subject: Subject<Notification>; // an RxJS subject used for multicasting notifications
-  subscribers: number;
+  subscribers: number; // the number of subscribers that are subscribed to this stream
 };
 
 export type Subscriber = {
