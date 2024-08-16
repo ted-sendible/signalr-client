@@ -7,7 +7,7 @@ export type UseNotificationsProps = {
   debugConnection?: boolean;
 };
 
-export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscription | undefined];
+export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscriber | undefined];
 
 export type Notification = {
   timestamp: Date;
@@ -18,6 +18,12 @@ export type Notification = {
 export type Stream = {
   topic: string; // notifications in the stream will be about this topic
   subject: Subject<Notification>; // an RxJS subject used for multicasting notifications
+  subscribers: number;
+};
+
+export type Subscriber = {
+  topic: string;
+  unsubscribe: () => void;
 };
 
 /*
@@ -90,6 +96,7 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
   }
 
   function subscribe(topic: string, onNotified: (notification: Notification) => void) {
+    // ensure the hub exists
     if(!hub){
       return;
     }
@@ -101,10 +108,13 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
     if(!existingStream) {
       const newStream: Stream = {
         topic,
-        subject: new Subject<Notification>()
+        subject: new Subject<Notification>(),
+        subscribers: 0
       };
       streams.set(topic, newStream);
 
+      // materialize the subscription by invoking the Subscribe method of the hub
+      // this only needs to happen once per stream when it's created
       hub.invoke("Subscribe", topic);
       
       existingStream = newStream;
@@ -116,8 +126,40 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
       error: () => {},
       complete: () => {}
     });
+    ++existingStream.subscribers;
 
-    return subscription;
+    return {
+      topic,
+      unsubscribe: () => unsubscribe(topic, subscription)
+    };
+  }
+
+  function unsubscribe(topic: string, subscription: Subscription) {
+    // ensure the hub exists
+    if(!hub){
+      return;
+    }
+
+    // find an existing stream
+    let existingStream = streams.get(topic);
+
+    // ensure the stream exists
+    if(!existingStream){
+      return;
+    }
+
+    // dispose the subscription and reduce the stream's subscriber count
+    subscription.unsubscribe();
+    --existingStream.subscribers;
+
+    if(existingStream.subscribers < 1){
+      // remove the stream when no one is subscribed to it
+      streams.delete(topic);
+
+      // release the backend subscription by invoking the Unsubscribe method of the hub
+      // this only needs to happen once per stream when it's destroyed
+      hub.invoke("Unsubscribe", topic);
+    }
   }
 
   function handleNotification(topic: string, timestamp: Date, title: string, body: string) {
