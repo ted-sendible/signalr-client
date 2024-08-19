@@ -10,6 +10,7 @@ export type UseNotificationsProps = {
 export type UseNotificationsReturnValue = [boolean, boolean, () => void, (topic: string, onNotified: (notification: Notification) => void) => Subscriber | undefined];
 
 export type Notification = {
+  topic: string;
   timestamp: Date;
   title: string;
   body: string;
@@ -173,7 +174,8 @@ function useNotifications({ hubUrl, debugConnection = false }: UseNotificationsP
 
     // create the notification object
     const notification: Notification = {
-      timestamp,
+      topic,
+      timestamp: new Date(timestamp),
       title,
       body
     };

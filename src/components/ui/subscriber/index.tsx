@@ -1,7 +1,7 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Card, CardContent, Chip, Stack, TextField, Typography } from "@mui/material";
+import { Button, Card, CardContent, Chip, Stack, TextField, Typography } from "@mui/material";
 import useNotifications, { Notification, Subscriber as SubscriberType } from "../../hooks/use-notifications";
 import { useEffect, useState } from "react";
-import { ExpandMore } from "@mui/icons-material";
+import NotificationItem from "../notification-item";
 
 export type SubscriberProps = {
   name: string;
@@ -70,19 +70,8 @@ function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: Sub
           </Stack>
           <Card variant="outlined" sx={{ flex: 1 }}>
             <CardContent>
-              {notifications.length > 0 ? notifications.map((notification, i) => (
-                <Accordion key={`notification-${i}`}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                    aria-controls={`notification-${i}-body`}
-                    id={`notification-${i}-title`}
-                  >
-                    {notification.title}
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {notification.body}
-                  </AccordionDetails>
-                </Accordion>
+              {notifications.length > 0 ? notifications.map((notification, id) => (
+                <NotificationItem notification={notification} id={id} />
               )) : (
                 <Typography align="center">No notifications.</Typography>
               )}
