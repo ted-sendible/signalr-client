@@ -1,5 +1,5 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
-import useNotifications, { Notification } from "../../hooks/use-notifications";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Card, CardContent, Chip, Stack, TextField, Typography } from "@mui/material";
+import useNotifications, { Notification, Subscriber as SubscriberType } from "../../hooks/use-notifications";
 import { useEffect, useState } from "react";
 import { ExpandMore } from "@mui/icons-material";
 
@@ -10,23 +10,26 @@ export type SubscriberProps = {
 
 function Subscriber({ name, hubUrl = "ws://localhost:8080/notifications" }: SubscriberProps) {
   const [isReady, isConnected, connect, subscribe] = useNotifications({
-    hubUrl,
-    // onNotify: (message: string) => { console.log(message); }
+    hubUrl
   });
+  const [topic, setTopic] = useState<string>("");
+  const [subscribers, setSubscribers] = useState<SubscriberType[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lastNotification, setLastNotification] = useState<Notification>();
-
-  useEffect(() => {
-    if(isConnected){
-      subscribe("system", setLastNotification);
-    }
-  }, [isConnected]);
 
   useEffect(() => {
     if(lastNotification){
       pushNotification(lastNotification);
     }
   }, [lastNotification]);
+
+  function handleSubscribe() {
+    if(isConnected && topic){
+      var newSubscriber = subscribe(topic, setLastNotification);
+      setSubscribers([...subscribers, newSubscriber!]);
+      setTopic("");
+    }
+  }
 
   function pushNotification(notification: Notification) {
     console.log(notifications);
@@ -43,14 +46,21 @@ function Subscriber({ name, hubUrl = "ws://localhost:8080/notifications" }: Subs
           <Stack direction="row" gap={1}>
             {isConnected ? (
               <>
-                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} disabled={!isConnected} />
-                <Button variant="contained" disabled={!isConnected}>Subscribe</Button>
+                <TextField id="topic" label="Topic" sx={{ minWidth: "80%" }} value={topic} onChange={e => setTopic(e.target.value)} disabled={!isConnected} />
+                <Button variant="contained" onClick={handleSubscribe} disabled={!isConnected}>Subscribe</Button>
               </>
             ) : (
               <>
                 <TextField id="hubUrl" label="Hub URL" sx={{ minWidth: "80%" }} defaultValue={hubUrl} disabled />
                 <Button variant="contained" color="success" onClick={connect} disabled={!isReady}>Connect</Button>
               </>
+            )}
+          </Stack>
+          <Stack direction="row" gap={1}>
+            {subscribers.length > 0 ? subscribers.map((subscriber, i) => (
+                <Chip key={i} label={subscriber.topic} color="warning" onDelete={() => {}} />
+            )) : (
+              <Typography align="center">No subscribed topics.</Typography>
             )}
           </Stack>
           <Card variant="outlined" sx={{ flex: 1 }}>
