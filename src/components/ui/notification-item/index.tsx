@@ -17,18 +17,20 @@ function NotificationItem({ notification, id }: NotificationItemProps) {
         id={`notification-${id}-title`}
         sx={{ backgroundColor: "#F5F5F5" }}
       >
-        <Stack direction="row" gap={1} alignItems="center">
-          <ArrowDownward color="success" />
-          <Chip label={notification.topic} color="default" />
-          <Typography align="left" fontWeight="medium" sx={{ minWidth: "70%" }}>
-            {notification.title}
-          </Typography>
-          <Typography align="right" fontSize="small" sx={{ minWidth: "30%" }} fontWeight="light">
+        <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" sx={{ width: "98%" }}>
+          <Stack direction="row" gap={1} alignItems="center">
+            <ArrowDownward color="success" />
+            <Chip label={notification.topic} color="default" />
+            <Typography align="left" fontWeight="medium">
+              {notification.title}
+            </Typography>
+          </Stack>
+          <Typography align="right" fontSize="small" fontWeight="light">
             {format(notification.timestamp, "h:mm:ss a")}
           </Typography>
         </Stack>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails sx={{ backgroundColor: "#F5F5F5" }}>
         {notification.body}
       </AccordionDetails>
     </Accordion>

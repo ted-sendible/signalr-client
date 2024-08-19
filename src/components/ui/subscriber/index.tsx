@@ -69,7 +69,7 @@ function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: Sub
             )}
           </Stack>
           <Card variant="outlined" sx={{ flex: 1 }}>
-            <CardContent>
+            <CardContent sx={{ maxHeight: "50vh", overflowY: "scroll" }}>
               {notifications.length > 0 ? notifications.map((notification, id) => (
                 <NotificationItem notification={notification} id={id} />
               )) : (
