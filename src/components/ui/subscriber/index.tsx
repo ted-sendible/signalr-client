@@ -8,7 +8,7 @@ export type SubscriberProps = {
   hubUrl?: string;
 };
 
-function Subscriber({ name, hubUrl = "ws://localhost:8080/notifications" }: SubscriberProps) {
+function Subscriber({ name, hubUrl = "wss://localhost:8080/notifications" }: SubscriberProps) {
   const [isReady, isConnected, connect, subscribe] = useNotifications({
     hubUrl
   });
@@ -58,7 +58,12 @@ function Subscriber({ name, hubUrl = "ws://localhost:8080/notifications" }: Subs
           </Stack>
           <Stack direction="row" gap={1}>
             {subscribers.length > 0 ? subscribers.map((subscriber, i) => (
-                <Chip key={i} label={subscriber.topic} color="warning" onDelete={() => {}} />
+                <Chip key={i} label={subscriber.topic} color="warning" onDelete={() => {
+                  subscriber.unsubscribe();
+                  const tempSubscribers = [...subscribers];
+                  tempSubscribers.splice(subscribers.indexOf(subscriber), 1);
+                  setSubscribers(tempSubscribers);
+                }} />
             )) : (
               <Typography align="center">No subscribed topics.</Typography>
             )}
